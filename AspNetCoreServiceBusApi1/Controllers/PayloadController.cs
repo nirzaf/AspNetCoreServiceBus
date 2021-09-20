@@ -13,6 +13,12 @@ namespace AspNetCoreServiceBusApi1.Controllers
     [ApiController]
     public class PayloadController : Controller
     {
+        private static readonly List<Payload> data = new()
+        {
+            new() { Id = 1, Goals = 3, Name = "wow" },
+            new() { Id = 2, Goals = 4, Name = "not so bad" }
+        };
+
         private ServiceBusSender _serviceBusSender;
 
         public PayloadController(ServiceBusSender serviceBusSender)
@@ -40,18 +46,13 @@ namespace AspNetCoreServiceBusApi1.Controllers
 
             var result = data.Where(d => d.Id == id);
 
-            if (result == null)
-            {
-                return NotFound();
-            }
-
             return Ok(result);
         }
 
         [HttpPost]
         [ProducesResponseType(typeof(Payload), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Payload), StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> Create([FromBody][Required] Payload request)
+        public async Task<IActionResult> Create([FromBody] [Required] Payload request)
         {
             if (data.Any(d => d.Id == request.Id))
             {
@@ -77,9 +78,9 @@ namespace AspNetCoreServiceBusApi1.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
         [ProducesDefaultResponseType]
-        public async Task<IActionResult> Update(int id, [FromBody][Required] Payload request)
+        public async Task<IActionResult> Update(int id, [FromBody] [Required] Payload request)
         {
-            if (!data.Any(d => d.Id == request.Id))
+            if (data.All(d => d.Id != request.Id))
             {
                 return NotFound($"data with id {id} does not exist");
             }
@@ -113,7 +114,7 @@ namespace AspNetCoreServiceBusApi1.Controllers
                 return BadRequest();
             }
 
-            if (!data.Any(d => d.Id == id))
+            if (data.All(d => d.Id != id))
             {
                 return NotFound($"data with id {id} does not exist");
             }
@@ -131,11 +132,5 @@ namespace AspNetCoreServiceBusApi1.Controllers
 
             return Ok();
         }
-
-        private static readonly List<Payload> data = new List<Payload>
-        {
-            new Payload{ Id=1, Goals=3, Name="wow"},
-            new Payload{ Id=2, Goals=4, Name="not so bad"},
-        };
     }
 }
